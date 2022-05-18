@@ -1,21 +1,17 @@
-package router
+package rootRouter
 
 import (
-	"go-postgres/middleware"
+	userRouter "go-postgres/router/user"
 
 	"github.com/gorilla/mux"
 )
 
 // Router is exported and used in main.go
-func Router() *mux.Router {
+func MainRouter() *mux.Router {
+	r := mux.NewRouter()
+	apiv1 := r.PathPrefix("/api/v1").Subrouter()
 
-	router := mux.NewRouter()
+	userRouter.InitUserRoute(apiv1)
 
-	router.HandleFunc("/api/user/{id}", middleware.GetUser).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/user", middleware.GetAllUser).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/newuser", middleware.CreateUser).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/user/{id}", middleware.UpdateUser).Methods("PUT", "OPTIONS")
-	router.HandleFunc("/api/deleteuser/{id}", middleware.DeleteUser).Methods("DELETE", "OPTIONS")
-
-	return router
+	return r
 }
