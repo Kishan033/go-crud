@@ -9,7 +9,9 @@ import (
 	"net/http" // used to access the request and response object of the api
 	"os"       // used to read the environment variable
 	"strconv"  // package used to covert string into int type
+	"time"
 
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux" // used to get the params from the route
 
 	"github.com/joho/godotenv" // package used to read the .env file
@@ -23,7 +25,7 @@ type response struct {
 }
 
 // create connection with postgres db
-func createConnection() *sql.DB {
+func CreateConnection() *sql.DB {
 	// load .env file
 	err := godotenv.Load(".env")
 
@@ -86,14 +88,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 func GetUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	// get the userid from the request params, key is "id"
-	params := mux.Vars(r)
 
-	// convert the id type from string to int
-	id, err := strconv.Atoi(params["id"])
-
-	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+	id, ok := context.Get(r, "userId").(float64)
+	if !ok {
+		log.Fatalf("User not found")
 	}
 
 	// call the getUser function with user id to retrieve a single user
@@ -205,21 +203,21 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 func insertUser(user models.User) int64 {
 
 	// create the postgres db connection
-	db := createConnection()
+	db := CreateConnection()
 
 	// close the db connection
 	defer db.Close()
 
 	// create the insert sql query
 	// returning userid will return the id of the inserted user
-	sqlStatement := `INSERT INTO users (name, location, age) VALUES ($1, $2, $3) RETURNING userid`
+	sqlStatement := `INSERT INTO users (name, location, age, email, password, createdat, updatedat) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING userid`
 
 	// the inserted id will store in this id
 	var id int64
 
 	// execute the sql statement
 	// Scan function will save the insert id in the id
-	err := db.QueryRow(sqlStatement, user.Name, user.Location, user.Age).Scan(&id)
+	err := db.QueryRow(sqlStatement, user.Name, user.Location, user.Age, user.Email, user.Password, time.Now(), time.Now()).Scan(&id)
 
 	if err != nil {
 		log.Fatalf("Unable to execute the query. %v", err)
@@ -234,7 +232,7 @@ func insertUser(user models.User) int64 {
 // get one user from the DB by its userid
 func getUser(id int64) (models.User, error) {
 	// create the postgres db connection
-	db := createConnection()
+	db := CreateConnection()
 
 	// close the db connection
 	defer db.Close()
@@ -249,7 +247,7 @@ func getUser(id int64) (models.User, error) {
 	row := db.QueryRow(sqlStatement, id)
 
 	// unmarshal the row object to user
-	err := row.Scan(&user.ID, &user.Name, &user.Age, &user.Location)
+	err := row.Scan(&user.ID, &user.Name, &user.Age, &user.Location, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
 
 	switch err {
 	case sql.ErrNoRows:
@@ -268,7 +266,7 @@ func getUser(id int64) (models.User, error) {
 // get one user from the DB by its userid
 func getAllUsers() ([]models.User, error) {
 	// create the postgres db connection
-	db := createConnection()
+	db := CreateConnection()
 
 	// close the db connection
 	defer db.Close()
@@ -312,7 +310,7 @@ func getAllUsers() ([]models.User, error) {
 func updateUser(id int64, user models.User) int64 {
 
 	// create the postgres db connection
-	db := createConnection()
+	db := CreateConnection()
 
 	// close the db connection
 	defer db.Close()
@@ -343,7 +341,7 @@ func updateUser(id int64, user models.User) int64 {
 func deleteUser(id int64) int64 {
 
 	// create the postgres db connection
-	db := createConnection()
+	db := CreateConnection()
 
 	// close the db connection
 	defer db.Close()
