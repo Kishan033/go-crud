@@ -1,6 +1,6 @@
 build:
   languages:
-    - go
+    - go1.18.2
 
 run:
   web: go-getting-started
