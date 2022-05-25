@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"go-postgres/router"
 
@@ -21,5 +22,5 @@ func setupRoutes() {
 func main() {
 	setupRoutes()
 	fmt.Println("Starting server on the port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), nil))
 }
