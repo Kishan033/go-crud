@@ -291,7 +291,7 @@ func getAllUsers() ([]models.User, error) {
 		var user models.User
 
 		// unmarshal the row object to user
-		err = rows.Scan(&user.ID, &user.Name, &user.Age, &user.Location)
+		err = rows.Scan(&user.ID, &user.Name, &user.Age, &user.Location, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)

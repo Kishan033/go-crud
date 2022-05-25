@@ -6,12 +6,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Router is exported and used in main.go
-func MainRouter() *mux.Router {
-	r := mux.NewRouter()
-	apiv1 := r.PathPrefix("/api/v1").Subrouter()
+func MainRouter(r *mux.Router) {
+	apiv1 := r.PathPrefix("/api/v1").Subrouter().StrictSlash(false)
 
 	userRouter.InitUserRoute(apiv1)
-
-	return r
 }
