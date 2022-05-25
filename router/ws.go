@@ -1,4 +1,4 @@
-package rootRouter
+package router
 
 import (
 	"log"

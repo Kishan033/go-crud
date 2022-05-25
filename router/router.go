@@ -1,4 +1,4 @@
-package rootRouter
+package router
 
 import (
 	userRouter "go-postgres/router/user"

@@ -5,16 +5,16 @@ import (
 	"log"
 	"net/http"
 
-	rootRouter "go-postgres/router"
+	"go-postgres/router"
 
 	"github.com/gorilla/mux"
 )
 
 func setupRoutes() {
 	r := mux.NewRouter().StrictSlash(false)
-	rootRouter.WSHandler(r)
-	rootRouter.MainRouter(r)
-	rootRouter.IndexHandler(r)
+	router.WSHandler(r)
+	router.MainRouter(r)
+	router.IndexHandler(r)
 	http.Handle("/", r)
 }
 
