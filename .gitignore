@@ -15,6 +15,5 @@
 # vendor/
 
 .env
-build
 
 .vscode
