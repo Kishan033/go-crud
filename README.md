@@ -1,5 +1,5 @@
 # Go-crud
-First task in go. Simple crud operations.
+Simple crud operations.
 
 
 ## Database
