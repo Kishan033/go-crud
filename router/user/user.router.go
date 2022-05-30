@@ -12,9 +12,9 @@ func InitUserRoute(router *mux.Router) {
 	route := router.PathPrefix("/user").Subrouter().StrictSlash(false)
 
 	route.HandleFunc("/login", userServices.Login).Methods("POST", "OPTIONS")
-	route.HandleFunc("/me", middleware.Auth(middleware.GetUser)).Methods("GET", "OPTIONS")
-	route.HandleFunc("/", middleware.GetAllUser).Methods("GET", "OPTIONS")
-	route.HandleFunc("/", middleware.CreateUser).Methods("POST", "OPTIONS")
-	route.HandleFunc("/{id}", middleware.UpdateUser).Methods("PUT", "OPTIONS")
-	route.HandleFunc("/{id}", middleware.DeleteUser).Methods("DELETE", "OPTIONS")
+	route.HandleFunc("/me", middleware.Auth(userServices.GetUser)).Methods("GET", "OPTIONS")
+	route.HandleFunc("/", userServices.GetAllUser).Methods("GET", "OPTIONS")
+	route.HandleFunc("/", userServices.CreateUser).Methods("POST", "OPTIONS")
+	route.HandleFunc("/{id}", userServices.UpdateUser).Methods("PUT", "OPTIONS")
+	route.HandleFunc("/{id}", userServices.DeleteUser).Methods("DELETE", "OPTIONS")
 }
