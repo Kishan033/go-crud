@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 )
 
 var upgrader = websocket.Upgrader{
@@ -30,6 +31,13 @@ type Event struct {
 	// defining struct variables
 	Type string
 	Data interface{}
+}
+
+type EventSendMessage struct {
+	Chat    string
+	From    string
+	To      string
+	Message string
 }
 
 // define a reader which will listen for
@@ -57,17 +65,49 @@ func reader(conn *websocket.Conn) {
 			return
 		}
 
+		isHandshake := true
+
 		switch event.Type {
 		case "userJoined":
-			defer closeConnection(event.Data.(string), conn)
-			if val, ok := userMap[event.Data.(string)]; ok {
-				fmt.Println("User exist", val)
-			} else {
-				userMap[event.Data.(string)] = UserMap{
-					event.Data.(string),
-					conn,
+			{
+				defer closeConnection(event.Data.(string), conn)
+				if val, ok := userMap[event.Data.(string)]; ok {
+					fmt.Println("User exist", val)
+				} else {
+					userMap[event.Data.(string)] = UserMap{
+						event.Data.(string),
+						conn,
+					}
+					broadCastUserList()
 				}
-				broadCastUserList()
+				isHandshake = false
+			}
+		case "onMessageSend":
+			{
+				var data EventSendMessage
+				mapstructure.Decode(event.Data, &data)
+				if receiver, ok := userMap[data.To]; ok {
+					fmt.Println("User exist", receiver)
+					if sender, ok := userMap[data.From]; ok {
+						fmt.Println("User exist", sender)
+
+						message, err := json.Marshal(Event{
+							"onMessageReceived",
+							map[string]string{
+								"to":      data.To,
+								"from":    data.From,
+								"message": data.Message,
+								"chat":    data.To,
+							},
+						})
+						if err != nil {
+							panic(err)
+						}
+						receiver.conn.WriteMessage(1, []byte(message))
+						sender.conn.WriteMessage(1, []byte(message))
+					}
+				}
+				isHandshake = false
 			}
 		}
 
@@ -75,9 +115,11 @@ func reader(conn *websocket.Conn) {
 		// decoded data
 		fmt.Println("Struct is:", event)
 
-		if err := conn.WriteMessage(messageType, []byte(event.Data.(string))); err != nil {
-			log.Println(err)
-			return
+		if isHandshake {
+			if err := conn.WriteMessage(messageType, []byte(event.Data.(string))); err != nil {
+				log.Println(err)
+				return
+			}
 		}
 
 	}
