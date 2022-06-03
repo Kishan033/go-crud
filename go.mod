@@ -11,4 +11,14 @@ require (
 	github.com/lib/pq v1.10.5
 )
 
-require github.com/mitchellh/mapstructure v1.5.0
+require (
+	github.com/go-kit/kit v0.12.0
+	github.com/mitchellh/mapstructure v1.5.0
+	github.com/opentracing/opentracing-go v1.2.0
+)
+
+require (
+	github.com/go-kit/log v0.2.0 // indirect
+	github.com/go-logfmt/logfmt v0.5.1 // indirect
+	google.golang.org/grpc v1.40.0 // indirect
+)

@@ -6,7 +6,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func IndexHandler(r *mux.Router) {
+func IndexHandler() *mux.Router {
+	mux := mux.NewRouter().StrictSlash(false)
 	buildHandler := http.FileServer(http.Dir("build"))
-	r.PathPrefix("/").Handler(buildHandler)
+	mux.PathPrefix("/").Handler(buildHandler)
+	return mux
 }

@@ -164,6 +164,8 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	reader(ws)
 }
 
-func WSHandler(r *mux.Router) {
-	r.HandleFunc("/ws", wsHandler)
+func WSHandler() *mux.Router {
+	mux := mux.NewRouter().StrictSlash(false)
+	mux.HandleFunc("/ws", wsHandler)
+	return mux
 }

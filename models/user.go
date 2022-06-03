@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"go-postgres/db"
 	"log"
 	"time"
 )
@@ -22,13 +21,15 @@ type User struct {
 	UpdatedAt time.Time `json:"updatedat,omitempty" sql:"updatedat"`
 }
 
-// type UserService interface {
-// 	InsertUser() int64
-// 	GetUsers(id int64) ([]*User, error)
-// 	GetAllUsers() ([]*User, error)
-// 	UpdateUser(id int64) int64
-// 	DeleteUser(id int64) int64
-// }
+type DBStore struct {
+	Store *sql.DB
+}
+
+var dbStore DBStore
+
+func InnitializeUserDBService(conn *sql.DB) {
+	dbStore.Store = conn
+}
 
 func (user *User) InsertUser() int64 {
 	// create the insert sql query
@@ -40,7 +41,7 @@ func (user *User) InsertUser() int64 {
 
 	// execute the sql statement
 	// Scan function will save the insert id in the id
-	err := db.DB.QueryRow(sqlStatement, user.Name, user.Location, user.Age, user.Email, user.Password, time.Now(), time.Now()).Scan(&id)
+	err := dbStore.Store.QueryRow(sqlStatement, user.Name, user.Location, user.Age, user.Email, user.Password, time.Now(), time.Now()).Scan(&id)
 
 	if err != nil {
 		log.Fatalf("Unable to execute the query. %v", err)
@@ -59,7 +60,7 @@ func (u User) GetUser(id int64) (User, error) {
 	sqlStatement := `SELECT * FROM users WHERE userid=$1`
 
 	// execute the sql statement
-	row := db.DB.QueryRow(sqlStatement, id)
+	row := dbStore.Store.QueryRow(sqlStatement, id)
 
 	// unmarshal the row object to user
 	err := row.Scan(&user.ID, &user.Name, &user.Age, &user.Location, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
@@ -85,7 +86,7 @@ func (u User) GetAllUsers() ([]User, error) {
 	sqlStatement := `SELECT * FROM users`
 
 	// execute the sql statement
-	rows, err := db.DB.Query(sqlStatement)
+	rows, err := dbStore.Store.Query(sqlStatement)
 
 	if err != nil {
 		log.Fatalf("Unable to execute the query. %v", err)
@@ -119,7 +120,7 @@ func (user *User) UpdateUser(id int64) int64 {
 	sqlStatement := `UPDATE users SET name=$2, location=$3, age=$4 WHERE userid=$1`
 
 	// execute the sql statement
-	res, err := db.DB.Exec(sqlStatement, id, user.Name, user.Location, user.Age)
+	res, err := dbStore.Store.Exec(sqlStatement, id, user.Name, user.Location, user.Age)
 
 	if err != nil {
 		log.Fatalf("Unable to execute the query. %v", err)
@@ -142,7 +143,7 @@ func (user User) DeleteUser(id int64) int64 {
 	sqlStatement := `DELETE FROM users WHERE userid=$1`
 
 	// execute the sql statement
-	res, err := db.DB.Exec(sqlStatement, id)
+	res, err := dbStore.Store.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to execute the query. %v", err)
@@ -164,7 +165,7 @@ func (u User) GetUserByEmail(email string) (User, error) {
 	var user User
 
 	sqlStatement := `select * from users where email = $1`
-	row := db.DB.QueryRow(sqlStatement, email)
+	row := dbStore.Store.QueryRow(sqlStatement, email)
 
 	err := row.Scan(&user.ID, &user.Name, &user.Age, &user.Location, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
 	switch err {
