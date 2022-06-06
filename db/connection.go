@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -14,20 +13,20 @@ func InnitializeDBService() *sql.DB {
 	err := godotenv.Load(".env")
 
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		// log.Fatalf("Error loading .env file")
 	}
 
 	dbcon, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
 
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 
 	// check the connection
 	err = dbcon.Ping()
 
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 
 	fmt.Println("Successfully connected to DB!")
