@@ -1,14 +1,11 @@
 package userdb
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"go-postgres/models"
 	"log"
 	"time"
-
-	"github.com/lib/pq"
 )
 
 type repo struct {
@@ -21,18 +18,12 @@ func NewRepo(client *sql.DB) *repo {
 	}
 }
 
-func (repo *repo) Add(ctx context.Context, user models.User) int64 {
+func (repo *repo) Add(user models.User) int64 {
 	sqlStatement := `INSERT INTO users (name, location, age, email, password, createdat, updatedat) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING userid`
 	var id int64
 
 	err := repo.client.QueryRow(sqlStatement, user.Name, user.Location, user.Age, user.Email, user.Password, time.Now(), time.Now()).Scan(&id)
 
-	pqErr := err.(*pq.Error)
-	log.Println(pqErr.Code)
-
-	if pqErr.Code == "23505" {
-		log.Println("Email already exist")
-	}
 	if err != nil {
 		log.Fatalf("Unable to execute the query. %v", err)
 	}
@@ -42,22 +33,29 @@ func (repo *repo) Add(ctx context.Context, user models.User) int64 {
 	return id
 }
 
-// func (repo *repo) Add(ctx context.Context, user models.User) (err error) {
+func (repo *repo) Edit(id int64, user models.User) int64 {
+	sqlStatement := `UPDATE users SET name=$2, location=$3, age=$4 WHERE userid=$1`
 
-// 	brand.CreatedAt = time.Now()
-// 	brand.UpdatedAt = time.Now()
-// 	_, err = repo.client.Database(repo.dbname).Collection(collection).InsertOne(ctx, brand)
-// 	if err != nil {
-// 		if mongo.IsDuplicateKeyError(err) {
-// 			return brandrepository.ErrBrandAlreadyExists
-// 		}
-// 		return err
-// 	}
+	// execute the sql statement
+	res, err := repo.client.Exec(sqlStatement, id, user.Name, user.Location, user.Age)
 
-// 	return nil
-// }
+	if err != nil {
+		log.Fatalf("Unable to execute the query. %v", err)
+	}
 
-func (repo *repo) Get(ctx context.Context, id int64) (u models.User, e error) {
+	// check how many rows affected
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Fatalf("Error while checking the affected rows. %v", err)
+	}
+
+	fmt.Printf("Total rows/record affected %v", rowsAffected)
+
+	return rowsAffected
+}
+
+func (repo *repo) Get(id int64) (u models.User, e error) {
 	var user models.User
 
 	sqlStatement := `SELECT * FROM users WHERE userid=$1`
@@ -79,38 +77,55 @@ func (repo *repo) Get(ctx context.Context, id int64) (u models.User, e error) {
 	return user, nil
 }
 
-// func (repo *repo) List(ctx context.Context) (brands []models.Brand, err error) {
-// 	cur, err := repo.client.Database(repo.dbname).Collection(collection).Find(ctx, bson.D{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (repo *repo) List() (users []models.User, err error) {
+	var userList []models.User
 
-// 	err = cur.All(ctx, &brands)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	// create the select sql query
+	sqlStatement := `SELECT * FROM users`
 
-// 	return brands, nil
-// }
+	rows, err := repo.client.Query(sqlStatement)
 
-// func (repo *repo) Update(ctx context.Context, id primitive.ObjectID, name string, logoUrl string, priority int) (err error) {
-// 	res, err := repo.client.Database(repo.dbname).Collection(collection).UpdateByID(ctx, id,
-// 		bson.M{
-// 			"$set": bson.M{
-// 				"name":       name,
-// 				"logo_url":   logoUrl,
-// 				"priority":   priority,
-// 				"updated_at": time.Now(),
-// 			},
-// 		},
-// 	)
-// 	if err != nil {
-// 		return err
-// 	}
+	if err != nil {
+		log.Fatalf("Unable to execute the query. %v", err)
+	}
 
-// 	if res.MatchedCount == 0 {
-// 		return brandrepository.ErrBrandNotFound
-// 	}
+	defer rows.Close()
 
-// 	return nil
-// }
+	for rows.Next() {
+		var user models.User
+
+		err = rows.Scan(&user.ID, &user.Name, &user.Age, &user.Location, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		userList = append(userList, user)
+
+	}
+
+	return userList, err
+}
+
+func (repo *repo) Delete(id int64) int64 {
+	// create the delete sql query
+	sqlStatement := `DELETE FROM users WHERE userid=$1`
+
+	// execute the sql statement
+	res, err := repo.client.Exec(sqlStatement, id)
+
+	if err != nil {
+		log.Fatalf("Unable to execute the query. %v", err)
+	}
+
+	// check how many rows affected
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Fatalf("Error while checking the affected rows. %v", err)
+	}
+
+	fmt.Printf("Total rows/record affected %v", rowsAffected)
+
+	return rowsAffected
+}

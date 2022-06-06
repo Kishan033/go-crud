@@ -13,3 +13,8 @@ type Claims struct {
 	Id int64 `json:"userId"`
 	jwt.StandardClaims
 }
+
+type response struct {
+	ID      int64  `json:"id,omitempty"`
+	Message string `json:"message,omitempty"`
+}
