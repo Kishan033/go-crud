@@ -18,8 +18,6 @@ var upgrader = websocket.Upgrader{
 }
 
 type UserMap struct {
-
-	// defining struct variables
 	Name string
 	conn *websocket.Conn
 }
@@ -27,8 +25,6 @@ type UserMap struct {
 var userMap = make(map[string]UserMap)
 
 type Event struct {
-
-	// defining struct variables
 	Type string
 	Data interface{}
 }
@@ -45,22 +41,18 @@ type EventSendMessage struct {
 // endpoint
 func reader(conn *websocket.Conn) {
 	for {
-		// read in a message
 		messageType, p, err := conn.ReadMessage()
 		fmt.Println("messageType", messageType)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		// print out that message for clarity
 		var event Event
 		log.Println(string(p))
 		parseErr := json.Unmarshal(p, &event)
 
 		if parseErr != nil {
 
-			// if error is not nil
-			// print error
 			fmt.Println(parseErr)
 			return
 		}
@@ -111,10 +103,7 @@ func reader(conn *websocket.Conn) {
 			}
 		}
 
-		// printing details of
-		// decoded data
 		fmt.Println("Struct is:", event)
-
 		if isHandshake {
 			if err := conn.WriteMessage(messageType, []byte(event.Data.(string))); err != nil {
 				log.Println(err)
@@ -147,8 +136,6 @@ func closeConnection(user string, conn *websocket.Conn) {
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
-	// upgrade this connection to a WebSocket
-	// connection
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
