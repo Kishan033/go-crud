@@ -1,28 +1,23 @@
 package userServices
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
-	"fmt"
 	"go-postgres/models"
-	"go-postgres/repositories/userrepository"
-	"log"
-	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
+	userrepository "go-postgres/services/user/repository"
 )
 
 var (
-	ErrInvalidArgument = errors.New("Invalid Argument")
+	ErrUserNotFound    = errors.New("user not found")
+	ErrQueryRepository = errors.New("unable to query repository")
 )
 
 type Service interface {
-	Add(w http.ResponseWriter, r *http.Request)
-	Get(w http.ResponseWriter, r *http.Request)
-	GetAll(w http.ResponseWriter, r *http.Request)
-	Edit(w http.ResponseWriter, r *http.Request)
-	Delete(w http.ResponseWriter, r *http.Request)
+	Add(ctx context.Context, user models.User) (int64, error)
+	Get(ctx context.Context, id int64) (models.User, error)
+	List(ctx context.Context) (users []models.User, err error)
+	Edit(ctx context.Context, id int64, user models.User) (int64, error)
+	Delete(ctx context.Context, id int64) (int64, error)
 }
 
 type service struct {
@@ -35,94 +30,22 @@ func NewService(userRepo userrepository.Repository) *service {
 	}
 }
 
-func (svc *service) Add(w http.ResponseWriter, r *http.Request) {
-	var user models.User
-
-	err := json.NewDecoder(r.Body).Decode(&user)
-
-	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
-	}
-	insertID := svc.userRepo.Add(user)
-
-	res := response{
-		ID:      insertID,
-		Message: "User created successfully",
-	}
-
-	json.NewEncoder(w).Encode(res)
+func (svc *service) Add(ctx context.Context, user models.User) (int64, error) {
+	return svc.userRepo.Add(ctx, user)
 }
 
-func (svc *service) Get(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := strconv.Atoi(params["id"])
-	if err != nil {
-		log.Fatalf("User not found")
-	}
-	user, err := svc.userRepo.Get(int64(id))
-
-	if err != nil {
-		log.Fatalf("Unable to get user. %v", err)
-	}
-
-	json.NewEncoder(w).Encode(user)
+func (svc *service) Get(ctx context.Context, id int64) (models.User, error) {
+	return svc.userRepo.Get(ctx, id)
 }
 
-func (svc *service) GetAll(w http.ResponseWriter, r *http.Request) {
-	users, err := svc.userRepo.List()
-
-	if err != nil {
-		log.Fatalf("Unable to get user list. %v", err)
-	}
-
-	json.NewEncoder(w).Encode(users)
+func (svc *service) List(ctx context.Context) (users []models.User, err error) {
+	return svc.userRepo.List(ctx)
 }
 
-func (svc *service) Edit(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-
-	id, err := strconv.Atoi(params["id"])
-
-	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
-	}
-
-	var user models.User
-
-	err = json.NewDecoder(r.Body).Decode(&user)
-
-	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
-	}
-
-	updatedRows := svc.userRepo.Edit(int64(id), user)
-
-	msg := fmt.Sprintf("User updated successfully. Total rows/record affected %v", updatedRows)
-
-	res := response{
-		ID:      int64(id),
-		Message: msg,
-	}
-
-	json.NewEncoder(w).Encode(res)
+func (svc *service) Edit(ctx context.Context, id int64, user models.User) (int64, error) {
+	return svc.userRepo.Edit(ctx, id, user)
 }
 
-func (svc *service) Delete(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-
-	id, err := strconv.Atoi(params["id"])
-	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
-	}
-
-	deletedRows := svc.userRepo.Delete(int64(id))
-
-	msg := fmt.Sprintf("User deleted successfully. Total rows/record deleted %v", deletedRows)
-
-	res := response{
-		ID:      int64(id),
-		Message: msg,
-	}
-
-	json.NewEncoder(w).Encode(res)
+func (svc *service) Delete(ctx context.Context, id int64) (int64, error) {
+	return svc.userRepo.Delete(ctx, id)
 }

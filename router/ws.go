@@ -42,7 +42,6 @@ type EventSendMessage struct {
 func reader(conn *websocket.Conn) {
 	for {
 		messageType, p, err := conn.ReadMessage()
-		fmt.Println("messageType", messageType)
 		if err != nil {
 			log.Println(err)
 			return
@@ -52,8 +51,6 @@ func reader(conn *websocket.Conn) {
 		parseErr := json.Unmarshal(p, &event)
 
 		if parseErr != nil {
-
-			fmt.Println(parseErr)
 			return
 		}
 
